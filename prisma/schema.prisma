@@ -1,0 +1,55 @@
+datasource db {
+  url      = env("DATABASE_URL")
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "ts"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model User {
+  id        String   @id @default(ulid()) @db.Char(26)
+  firstname String
+  lastname  String
+  email     String   @unique
+  password  String   @db.Char(60)
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  projects Project[]
+}
+
+model Project {
+  id             String        @id @default(ulid()) @db.Char(26)
+  creator        User          @relation(fields: [creator_id], references: [id])
+  creator_id     String        @db.Char(26)
+  name           String
+  land_size      Int
+  budget         Int
+  harvest_yield  Int?
+  harvest_profit Int?
+  duration       DateTime
+  target         Int
+  actual_target  Int?
+  status         ProjectStatus @default(PLANNING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now())
+}

@@ -1,0 +1,27 @@
+{
+  "name": "agroflow-api-backend",
+  "repository": {
+    "url": "https://github.com/crazydw4rf/agroflow-api-backend"
+  },
+  "license": "MIT",
+  "version": "0.0.1",
+  "scripts": {
+    "db:schema:gen": "prisma generate",
+    "db:schema:fmt": "prisma format",
+    "postinstall": "prisma generate"
+  },
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.3",
+    "prisma": "^6.9.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.9.0",
+    "express": "^5.1.0"
+  }
+}
