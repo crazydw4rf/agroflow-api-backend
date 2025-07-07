@@ -26,30 +26,40 @@ enum ProjectStatus {
 
 model User {
   id        String   @id @default(ulid()) @db.Char(26)
-  firstname String
-  lastname  String
+  name      String
   email     String   @unique
   password  String   @db.Char(60)
   role      Role     @default(USER)
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   projects Project[]
+  Farms    Farms[]
 }
 
 model Project {
-  id             String        @id @default(ulid()) @db.Char(26)
-  creator        User          @relation(fields: [creator_id], references: [id])
-  creator_id     String        @db.Char(26)
-  name           String
-  land_size      Int
-  budget         Int
-  harvest_yield  Int?
-  harvest_profit Int?
-  duration       DateTime
-  target         Int
-  actual_target  Int?
-  status         ProjectStatus @default(PLANNING)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @default(now())
+  id          String        @id @default(ulid()) @db.Char(26)
+  creator     User          @relation(fields: [creator_id], references: [id])
+  creator_id  String        @db.Char(26)
+  name        String
+  land_size   Int
+  budget      Int
+  duration    DateTime
+  target_date DateTime
+  status      ProjectStatus @default(PLANNING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
+}
+
+model Farms {
+  id        String   @id @default(ulid()) @db.Char(26)
+  owner     User     @relation(fields: [owner_id], references: [id])
+  owner_id  String   @db.Char(26)
+  name      String
+  location  String
+  area      Int
+  soil_type String
+  commodity String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
