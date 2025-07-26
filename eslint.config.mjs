@@ -1,5 +1,6 @@
 import tseslint from "typescript-eslint";
 import eslint from "@eslint/js";
+import { globalIgnores } from "eslint/config"
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 
 export default tseslint.config(
@@ -14,6 +15,7 @@ export default tseslint.config(
       },
     },
   },
+  globalIgnores(["./experiments", "./src/generated", "*.*js"]),
   {
     plugins: {
       "simple-import-sort": simpleImportSort,

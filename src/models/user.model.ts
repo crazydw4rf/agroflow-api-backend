@@ -9,4 +9,9 @@ export const zCreateUser = zod.object({
   password: zod.string().min(8),
 } satisfies AnyProps<User>);
 
-export type CreateUserType = zod.infer<typeof zCreateUser>;
+export const zLoginUser = zCreateUser.pick({ email: true, password: true })
+
+export type UserRegisterRequest = zod.infer<typeof zCreateUser>;
+
+export type UserLoginRequest = zod.infer<typeof zLoginUser>;
+

@@ -8,7 +8,6 @@ Sebuah layanan API backend modern untuk manajemen proyek pertanian yang dibangun
 
 ## TODOS
 
-- [ ] Kode dasar untuk CRUD
 - [ ] Desain database
 - [ ] Buat dokumentasi API menggunakan Swagger
 - [ ] Integration test
