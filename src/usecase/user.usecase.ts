@@ -1,38 +1,45 @@
-import argon2 from "argon2"
 import { inject, injectable } from "inversify";
-import * as jwt from "jsonwebtoken"
+import type { Logger } from "winston";
 
-import type { User, UserWithToken } from "@/entity";
-import { type UserLoginRequest, type UserRegisterRequest, zCreateUser, zLoginUser } from "@/models";
+import type { User } from "@/entity";
+import { type UserRegisterDto, zCreateUser } from "@/models";
 import { type IUserRepository, UserRepository } from "@/repository";
-import { ConfigService } from "@/services/config";
-import { AppError,ErrorCause } from "@/types/errors";
+import { LoggingService } from "@/services/logger";
+import { AppError, ErrorCause } from "@/types/errors";
 import type { Result } from "@/types/helper";
-import { Err, Ok } from "@/utils/helper";
+import { Err, Ok } from "@/utils";
 
 export interface IUserUsecase {
-  register(req: UserRegisterRequest): Promise<Result<User>>;
-  login(req: UserLoginRequest): Promise<Result<UserWithToken>>;
-  logout(): Promise<Result<unknown>>;
+  register(dto: UserRegisterDto): Promise<Result<User>>;
   update(): Promise<Result<unknown>>;
   delete(): Promise<Result<unknown>>;
-  getByID(): Promise<Result<unknown>>;
+  getByID(id: string): Promise<Result<User>>;
 }
 
 @injectable("Singleton")
 export class UserUsecase implements IUserUsecase {
-  constructor(
-    @inject(UserRepository) private _userRepo: IUserRepository,
-    @inject(ConfigService) private _config: ConfigService,
-  ) { }
+  private _logger: Logger;
 
-  async register(req: UserRegisterRequest): Promise<Result<User>> {
-    const parsed = zCreateUser.safeParse(req);
-    if (!parsed.success) {
+  constructor(
+    @inject(UserRepository) private readonly _userRepo: IUserRepository,
+    @inject(LoggingService) private readonly _loggerInstance: LoggingService,
+  ) {
+    this._logger = this._loggerInstance.withLabel("UserUsecase");
+  }
+
+  async register(dto: UserRegisterDto): Promise<Result<User>> {
+    this._logger.debug("registering user", { ...dto, password: null });
+    const validatedData = zCreateUser.safeParse(dto);
+    if (!validatedData.success) {
       return Err(AppError.new("Invalid request payload", ErrorCause.VALIDATION_ERROR));
     }
 
-    const { ok: user, err } = await this._userRepo.create(parsed.data);
+    // NOTE: mending pakai bun atau library dari nodejs untuk password hashing?
+    // secara default fungsi .hash() pada Bun.password menggunakan argon2
+    // jika ingin menggunakan bcrypt bisa tambahkan nilai string "bcrypt" pada parameter kedua
+    validatedData.data.password = await Bun.password.hash(validatedData.data.password);
+
+    const [user, err] = await this._userRepo.create(validatedData.data);
     if (err) {
       return Err(err);
     }
@@ -40,40 +47,20 @@ export class UserUsecase implements IUserUsecase {
     return Ok(user);
   }
 
-  async login(req: UserLoginRequest): Promise<Result<UserWithToken>> {
-    const parsed = zLoginUser.safeParse(req);
-    if (!parsed.success) {
-      return Err(AppError.new("Invalid request payload", ErrorCause.VALIDATION_ERROR));
-    }
+  update(): Promise<Result<unknown>> {
+    throw new Error("Method not implemented.");
+  }
 
-    const { ok: user, err } = await this._userRepo.findByEmail(parsed.data.email);
+  delete(): Promise<Result<unknown>> {
+    throw new Error("Method not implemented.");
+  }
+
+  async getByID(id: string): Promise<Result<User>> {
+    const [user, err] = await this._userRepo.find(id);
     if (err) {
       return Err(err);
     }
 
-    const verifyPasswd = await argon2.verify(user.password, req.password)
-    if (!verifyPasswd) {
-      return Err(AppError.new("Invalid password", ErrorCause.CREDENTIALS_ERROR));
-    }
-
-    const token = jwt.sign({ id: user.id }, this._config.env.JWT_SECRET, this._config.app.jwt);
-
-    return Ok({ ...user, token });
-  }
-
-  async logout(): Promise<Result<unknown>> {
-    throw new Error("Method not implemented.");
-  }
-
-  async update(): Promise<Result<unknown>> {
-    throw new Error("Method not implemented.");
-  }
-
-  async delete(): Promise<Result<unknown>> {
-    throw new Error("Method not implemented.");
-  }
-
-  async getByID(): Promise<Result<unknown>> {
-    throw new Error("Method not implemented.");
+    return Ok(user);
   }
 }

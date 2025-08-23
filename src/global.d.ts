@@ -1,5 +1,3 @@
-import type { User } from "./entity";
-
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
@@ -12,7 +10,7 @@ declare global {
 
   namespace Express {
     interface Locals {
-      user: User;
+      user: { id: string; role?: string };
     }
   }
 }

@@ -1,64 +1,49 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { inject, injectable } from "inversify";
-import ms from "ms";
+import type { Logger } from "winston";
 
-import type { User } from "@/entity";
-import { ConfigService } from "@/services/config";
+import { LoggingService } from "@/services/logger";
 import { type IUserUsecase, UserUsecase } from "@/usecase/user.usecase";
-import { httpError, httpResponse } from "@/utils/http";
-
-export interface IUserController {
-  registerUser(req: Request, res: Response): Promise<void>;
-  loginUser(req: Request, res: Response): Promise<void>;
-}
+import { sanitizeUser } from "@/utils";
+import { httpResponse } from "@/utils/http";
 
 @injectable("Singleton")
-export class UserController implements IUserController {
+export class UserController {
+  private _logger: Logger;
+
   constructor(
-    @inject(ConfigService) private readonly _config: ConfigService,
-    @inject(UserUsecase) private readonly _userUc: IUserUsecase
+    @inject(UserUsecase) private readonly _userUc: IUserUsecase,
+    @inject(LoggingService) private readonly _loggerInstance: LoggingService,
   ) {
-    // Melakukan bind pada method agar nilai this tetap mengacu pada class UserController.
-    // Alternatif lain adalah mengubah method menjadi arrow function.
-    this.registerUser = this.registerUser.bind(this);
-    this.loginUser = this.loginUser.bind(this);
+    this._logger = this._loggerInstance.withLabel("UserController");
   }
-
-  async registerUser(req: Request, res: Response): Promise<void> {
-    const { ok: result, err } = await this._userUc.register(req.body);
+  public registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const [result, err] = await this._userUc.register(req.body);
     if (err) {
-      httpError(res, err)
+      next(err);
       return;
     }
 
-    httpResponse(res, StatusCodes.CREATED, { data: result });
-  }
+    httpResponse(res, StatusCodes.CREATED, { data: sanitizeUser(result) });
+  };
 
-  async loginUser(req: Request, res: Response): Promise<void> {
-    const { ok: user, err } = await this._userUc.login(req.body);
+  public deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    throw new Error("Method not implemented.");
+  };
+  public updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    throw new Error("Method not implemented.");
+  };
+
+  public me = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const [user, err] = await this._userUc.getByID(res.locals.user.id);
     if (err) {
-      httpError(res, err);
+      next(err);
       return;
     }
 
-    this.setAuthCookie(res, user.token)
-
-    res.status(StatusCodes.OK)
-    httpResponse(res, StatusCodes.OK, { data: this.sanitizeUser(user) });
-  }
-
-
-  protected setAuthCookie(res: Response, token: string): void {
-    res.cookie("token", token, {
-      httpOnly: true,
-      domain: this._config.env.DOMAIN_NAME,
-      expires: new Date(Date.now() + ms("7d")),
-    })
-  }
-
-  protected sanitizeUser<T extends User>(user: T): T {
-    return { ...user, password: undefined, token: undefined, id: undefined }
-  }
+    httpResponse(res, StatusCodes.OK, { data: sanitizeUser(user) });
+  };
 }

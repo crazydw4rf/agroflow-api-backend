@@ -1,5 +1,5 @@
-import type { User } from "@/generated/prisma";
+import type { User } from "@/generated/prisma/client";
 
-export type { User } from "@/generated/prisma";
+export type { User } from "@/generated/prisma/client";
 
-export type UserWithToken = User & { token: string };
+export type UserWithToken = User & { accessToken: string; refreshToken: string };
