@@ -28,13 +28,13 @@ model User {
   id        String   @id @default(ulid()) @db.Char(26)
   name      String
   email     String   @unique
-  password  String   @db.Char(60)
+  password  String   @db.VarChar(255)
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
   projects Project[]
-  Farms    Farms[]
+  farms    Farms[]
 }
 
 model Project {
