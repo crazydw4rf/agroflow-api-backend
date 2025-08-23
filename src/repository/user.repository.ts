@@ -1,14 +1,15 @@
 // I hate typescript
 import { inject, injectable } from "inversify";
+import type { Logger } from "winston";
 
 import type { User } from "@/entity";
-import { Prisma } from "@/generated/prisma";
-import type { UserCreateInput, UserUpdateInput } from "@/models";
-import { PrismaService } from "@/services/prisma";
-import { AppError,ErrorCause } from "@/types/errors";
+import { Prisma } from "@/generated/prisma/client";
+import type { UserCreateInput, UserModel, UserUpdateInput } from "@/models";
+import { LoggingService } from "@/services/logger";
+import { AppError, ErrorCause } from "@/types/errors";
 import type { Result } from "@/types/helper";
-import { Err, Ok } from "@/utils/helper";
-import Merror from "@/utils/merror";
+import { UserModelSym } from "@/types/symbols";
+import { Err, Ok } from "@/utils";
 
 export interface IUserRepository {
   create(user: UserCreateInput): Promise<Result<User>>;
@@ -16,115 +17,104 @@ export interface IUserRepository {
   findByEmail(email: string): Promise<Result<User>>;
   findMany(offset: number, limit: number): Promise<Result<User[]>>;
   update(id: string, user: UserUpdateInput): Promise<Result<User>>;
-  delete(id: string): Promise<Merror>;
+  delete(id: string): Promise<Result<null>>;
 }
 
 @injectable("Singleton")
 export class UserRepository implements IUserRepository {
-  constructor(@inject(PrismaService) private readonly _prisma: PrismaService) { }
+  private _logger: Logger;
+
+  constructor(
+    @inject(UserModelSym) private readonly _user: UserModel,
+    @inject(LoggingService) private readonly _loggerInstance: LoggingService,
+  ) {
+    this._logger = this._loggerInstance.withLabel("UserRepository");
+  }
 
   async create(user: UserCreateInput): Promise<Result<User>> {
     try {
-      const createdUser = await this._prisma.user.create({ data: { ...user } });
+      const createdUser = await this._user.create({ data: { ...user } });
+      this._logger.debug("new user created", { ...user, password: undefined });
       return Ok(createdUser);
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === "P2002") {
-          // Unique constraint violation
-          return Err(AppError.new("User already exists", ErrorCause.DUPLICATE_ENTRY));
-        }
-        return Err(AppError.new(e.message, ErrorCause.DATABASE_ERROR));
-      }
-      return Err(AppError.new("Failed to create user: ".concat(e as string), ErrorCause.UNKNOWN_ERROR));
+      return this.handleError(e);
     }
   }
 
   async find(id: string): Promise<Result<User>> {
     try {
-      const user = await this._prisma.user.findFirst({ where: { id } });
+      const user = await this._user.findFirst({ where: { id } });
       if (!user) {
         return Err(AppError.new("User not found", ErrorCause.ENTRY_NOT_FOUND));
       }
 
       return Ok(user);
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        return Err(AppError.new(e.message, ErrorCause.DATABASE_ERROR));
-      }
-      return Err(AppError.new("Failed to find user: ".concat(e as string), ErrorCause.UNKNOWN_ERROR));
+      return this.handleError(e);
     }
   }
 
   async findByEmail(email: string): Promise<Result<User>> {
     try {
-      const user = await this._prisma.user.findFirst({ where: { email } });
+      const user = await this._user.findFirst({ where: { email } });
       if (!user) {
         return Err(AppError.new("User not found", ErrorCause.ENTRY_NOT_FOUND));
       }
 
       return Ok(user);
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        return Err(AppError.new(e.message, ErrorCause.DATABASE_ERROR));
-      }
-      return Err(AppError.new("Failed to find user by email: ".concat(e as string), ErrorCause.UNKNOWN_ERROR));
+      return this.handleError(e);
     }
   }
 
   async findMany(offset: number, limit: number): Promise<Result<User[]>> {
     try {
-      const users = await this._prisma.user.findMany({
+      const users = await this._user.findMany({
         skip: offset,
         take: limit,
         orderBy: { createdAt: "desc" },
       });
 
-      if (users.length === 0) {
+      if (users.length <= 0) {
         return Err(AppError.new("No users found", ErrorCause.ENTRY_NOT_FOUND));
       }
 
       return Ok(users);
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        return Err(AppError.new(e.message, ErrorCause.DATABASE_ERROR));
-      }
-      return Err(AppError.new("Failed to find users: ".concat(e as string), ErrorCause.UNKNOWN_ERROR));
+      return this.handleError(e);
     }
   }
 
   async update(id: string, user: UserUpdateInput): Promise<Result<User>> {
     try {
-      const updatedUser = await this._prisma.user.update({
+      const updatedUser = await this._user.update({
         where: { id },
         data: { ...user },
       });
       return Ok(updatedUser);
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === "P2025") {
-          return Err(AppError.new("User not found", ErrorCause.ENTRY_NOT_FOUND));
-        }
-        return Err(AppError.new(e.message, ErrorCause.DATABASE_ERROR));
-      }
-      return Err(AppError.new("Failed to update user: ".concat(e as string), ErrorCause.UNKNOWN_ERROR));
+      return this.handleError(e);
     }
   }
 
-  async delete(id: string): Promise<Merror> {
+  async delete(id: string): Promise<Result<null>> {
     try {
-      await this._prisma.user.delete({
-        where: { id },
-      });
-      return Merror.new(AppError.new("User deleted successfully", ErrorCause.ENTRY_NOT_FOUND));
+      await this._user.delete({ where: { id } });
+      return Ok(null);
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === "P2025") {
-          return Merror.new(AppError.new("User not found", ErrorCause.ENTRY_NOT_FOUND));
-        }
-        return Merror.new(AppError.new(e.message, ErrorCause.DATABASE_ERROR));
-      }
-      return Merror.new(AppError.new("Failed to delete user: ".concat(e as string), ErrorCause.UNKNOWN_ERROR));
+      return this.handleError(e);
     }
+  }
+
+  protected handleError(e: any): Result<any> {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2002") {
+        return Err(AppError.new("Unique constraint violation", ErrorCause.DUPLICATE_ENTRY));
+      } else if (e.code === "P2025") {
+        return Err(AppError.new("Entry not found", ErrorCause.ENTRY_NOT_FOUND));
+      }
+      return Err(AppError.new(e.message, ErrorCause.DATABASE_ERROR));
+    }
+    return Err(AppError.new("An unknown error occurred: ".concat(e as string), ErrorCause.UNKNOWN_ERROR));
   }
 }
-
