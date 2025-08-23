@@ -1,25 +1,23 @@
 import dotenv from "dotenv";
 import { injectable } from "inversify";
-import type { SignOptions } from "jsonwebtoken"
 import zod from "zod/v4";
 
 const zEnvConfig = zod.object({
   APP_HOST: zod.string().default("localhost"),
   APP_PORT: zod.coerce.number().default(3000),
-  JWT_SECRET: zod.string(),
+  APP_ENV: zod.enum(["development", "production", "test"]).default("development"),
+  JWT_ACCESS_SECRET: zod.string(),
+  JWT_REFRESH_SECRET: zod.string(),
   DOMAIN_NAME: zod.string().default("example.com"),
-})
+  REDIS_HOST: zod.string().default("localhost"),
+  REDIS_PORT: zod.coerce.number().default(6379),
+});
 
-const defaultAppConfig = {
-  jwt: {
-    algorithm: "HS256",
-    expiresIn: "1w",
-  } satisfies SignOptions,
-}
+type EnvConfig = zod.infer<typeof zEnvConfig>;
 
 @injectable("Singleton")
 export class ConfigService {
-  private _env!: zod.infer<typeof zEnvConfig>;
+  public env!: EnvConfig;
 
   constructor() {
     this.loadEnv();
@@ -27,24 +25,15 @@ export class ConfigService {
   }
 
   protected loadEnv(): void {
-    dotenv.config()
+    dotenv.config({ quiet: true });
   }
 
   protected parseEnv(): void {
-    const parsed = zEnvConfig.safeParse(process.env);
-    if (!parsed.success) {
-      throw new Error("Failed to parse environment variables: " + parsed.error.message);
+    const config = zEnvConfig.safeParse(process.env);
+    if (!config.success) {
+      throw new Error("Failed to parse environment variables: " + config.error.message);
     }
 
-    this._env = parsed.data;
-  }
-
-  get env(): zod.infer<typeof zEnvConfig> {
-    return this._env;
-  }
-
-  get app(): typeof defaultAppConfig {
-    return defaultAppConfig
+    this.env = config.data;
   }
 }
-
