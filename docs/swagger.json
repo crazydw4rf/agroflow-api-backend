@@ -1,0 +1,318 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Agroflow API",
+    "version": "1.0.0",
+    "description": "API documentation for the Agroflow backend."
+  },
+  "servers": [
+    {
+      "url": "/v1",
+      "description": "Base path for the API"
+    }
+  ],
+  "tags": [
+    {
+      "name": "User",
+      "description": "User-related endpoints"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication and authorization endpoints"
+    }
+  ],
+  "paths": {
+    "/users/register": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegister"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Fetch current user details",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - missing or invalid token"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login a user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User logged in successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWithToken"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid credentials"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout a user",
+        "responses": {
+          "200": {
+            "description": "User logged out successfully"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh access token",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or expired refresh token"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "ulid",
+            "description": "Unique identifier for the user"
+          },
+          "name": {
+            "type": "string",
+            "description": "User's name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "description": "User's role"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time of user creation"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time of last user update"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UserRegister": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "User's name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "description": "User's password"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "UserLogin": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address"
+          },
+          "password": {
+            "type": "string",
+            "description": "User's password"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "UserWithToken": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "accessToken": {
+                "type": "string",
+                "description": "JWT access token"
+              },
+              "refreshToken": {
+                "type": "string",
+                "description": "JWT refresh token"
+              }
+            },
+            "required": [
+              "accessToken",
+              "refreshToken"
+            ]
+          }
+        ]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "refresh_token"
+      }
+    }
+  }
+}
