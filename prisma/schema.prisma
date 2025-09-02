@@ -7,7 +7,7 @@ generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 
-  runtime                = "nodejs"
+  runtime                = "bun"
   moduleFormat           = "esm"
   generatedFileExtension = "ts"
   importFileExtension    = "ts"
@@ -25,41 +25,40 @@ enum ProjectStatus {
 }
 
 model User {
-  id        String   @id @default(ulid()) @db.Char(26)
-  name      String
-  email     String   @unique
-  password  String   @db.VarChar(255)
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id            String   @id @default(ulid()) @db.Char(26)
+  first_name    String
+  last_name     String?
+  email         String   @unique
+  password_hash String   @db.VarChar(255)
+  role          Role     @default(USER)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now()) @updatedAt
 
-  projects Project[]
-  farms    Farms[]
+  projects Project[] // satu user bisa punya banyak project
 }
 
 model Project {
-  id          String        @id @default(ulid()) @db.Char(26)
-  creator     User          @relation(fields: [creator_id], references: [id])
-  creator_id  String        @db.Char(26)
-  name        String
-  land_size   Int
-  budget      Int
-  duration    DateTime
-  target_date DateTime
-  status      ProjectStatus @default(PLANNING)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @default(now()) @updatedAt
+  id             String        @id @default(ulid()) @db.Char(26)
+  user_id        String        @db.Char(26) // pemilik atau pembuat proyek - user -> project FK
+  project_name   String
+  budget         Int
+  project_status ProjectStatus @default(PLANNING)
+  start_date     DateTime
+  target_date    DateTime
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @default(now()) @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  farms Farm[] // satu project bisa punya banyak farm
 }
 
-model Farms {
-  id        String   @id @default(ulid()) @db.Char(26)
-  owner     User     @relation(fields: [owner_id], references: [id])
-  owner_id  String   @db.Char(26)
-  name      String
-  location  String
-  area      Int
-  soil_type String
-  commodity String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+model Farm {
+  id         String @id @default(ulid()) @db.Char(26)
+  project_id String @db.Char(26) // project -> farm FK
+  farm_name  String
+  location   String
+  land_size  Int
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
 }
