@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import express, { type Express } from "express";
 import { inject, injectable, multiInject } from "inversify";
 import type { Logger } from "winston";
@@ -24,11 +24,17 @@ export class ExpressService {
   ) {
     this._logger = this._loggerInstance.withLabel("ExpressService");
 
-    this._express.use(this._appMiddleware.requestId, this._appMiddleware.httpLogger);
+    this._express.use(cookieParser());
+    this._express.use(cors({ origin: this._config.env.CORS_ORIGIN }));
+    this._express.use(express.urlencoded({ extended: true }));
     this._express.use(express.json());
 
-    this._express.use(cookieParser());
-    this._express.use(express.urlencoded({ extended: true }));
+    this._express.use(this._appMiddleware.requestId, this._appMiddleware.httpLogger);
+
+    // FIXME: tampilkan halaman dokumentasi
+    this._express.get("/", (_, res) => {
+      res.status(200).json({ hello: "world" });
+    });
 
     this.registerRoutes();
 

@@ -31,7 +31,7 @@ export function isValidPayloadObject(o: string | JwtPayload): o is JwtPayload & 
 export function sanitizeUser<T extends User>(user: T): T & UserWithToken {
   return {
     ...user,
-    password: undefined,
+    password_hash: undefined,
     token: undefined,
     id: undefined,
     accessToken: undefined,

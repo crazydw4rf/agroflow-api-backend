@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import type { Logger } from "winston";
 
 import type { User, UserWithToken } from "@/entity";
-import { type UserLoginDto, zLoginUser } from "@/models";
+import { type UserLoginDto } from "@/models";
 import { type IUserRepository, UserRepository } from "@/repository";
 import { ConfigService } from "@/services/config";
 import { LoggingService } from "@/services/logger";
@@ -28,18 +28,14 @@ export class AuthUsecase implements IAuthUsecase {
   }
 
   async login(dto: UserLoginDto): Promise<Result<UserWithToken>> {
-    this._logger.debug(`logging in user with email ${dto.email}`);
-    const validatedData = zLoginUser.safeParse(dto);
-    if (!validatedData.success) {
-      return Err(AppError.new("Invalid request payload", ErrorCause.VALIDATION_ERROR));
-    }
+    this._logger.debug("logging in user", { ...dto, password: undefined });
 
-    const [user, err] = await this._userRepo.findByEmail(validatedData.data.email);
+    const [user, err] = await this._userRepo.findByEmail(dto.email);
     if (err) {
       return Err(err);
     }
 
-    const verifyPasswd = await Bun.password.verify(dto.password, user.password);
+    const verifyPasswd = await Bun.password.verify(dto.password, user.password_hash);
     if (!verifyPasswd) {
       return Err(AppError.new("Invalid password", ErrorCause.CREDENTIALS_ERROR));
     }
@@ -50,7 +46,7 @@ export class AuthUsecase implements IAuthUsecase {
   }
 
   async refreshToken(id: string): Promise<Result<UserWithToken>> {
-    const [user, err] = await this._userRepo.find(id);
+    const [user, err] = await this._userRepo.get(id);
     if (err) {
       return Err(err);
     }
