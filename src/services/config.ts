@@ -8,7 +8,7 @@ const zEnvConfig = zod.object({
   APP_ENV: zod.enum(["development", "production", "test"]).default("development"),
   JWT_ACCESS_SECRET: zod.string(),
   JWT_REFRESH_SECRET: zod.string(),
-  DOMAIN_NAME: zod.string().default("example.com"),
+  CORS_ORIGIN: zod.string().default("http://localhost:3000"),
   REDIS_HOST: zod.string().default("localhost"),
   REDIS_PORT: zod.coerce.number().default(6379),
 });
