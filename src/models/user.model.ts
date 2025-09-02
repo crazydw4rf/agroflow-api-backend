@@ -1,20 +1,24 @@
-import { Prisma } from "@prisma/client";
-import type { DefaultArgs } from "@prisma/client/runtime/library";
-import zod from "zod/v4";
+import z from "zod/v4";
 
 import type { User } from "@/entity";
-import type { AnyProps } from "@/types/helper";
+import type { ZodPartial } from "@/types/helper";
 
-export type UserModel = Prisma.UserDelegate<DefaultArgs, Prisma.PrismaClientOptions>;
+export type { UserDelegate as UserModel } from "@/generated/prisma/models";
 
-export const zCreateUser = zod.object({
-  name: zod.string().regex(/^(?!.*[\p{Emoji}\d]).*$/u, "user name must not contain emojis or numbers"),
-  email: zod.email("email must be a valid email address"),
-  password: zod.string().min(8, "password must be at least 8 characters long"),
-} satisfies AnyProps<User>);
+const zName = z
+  .string()
+  .max(128, "user name must be at most 255 characters long")
+  .regex(/^(?!.*[\p{Emoji}\d]).*$/u, "user name must not contain emojis or numbers");
+
+export const zCreateUser = z.object({
+  first_name: zName,
+  last_name: zName,
+  email: z.email("email must be a valid email address"),
+  password: z.string().min(8, "password must be at least 8 characters long"),
+} satisfies ZodPartial<User>);
 
 export const zLoginUser = zCreateUser.pick({ email: true, password: true });
 
-export type UserRegisterDto = zod.infer<typeof zCreateUser>;
+export type UserRegisterDto = z.infer<typeof zCreateUser>;
 
-export type UserLoginDto = zod.infer<typeof zLoginUser>;
+export type UserLoginDto = z.infer<typeof zLoginUser>;

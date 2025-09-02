@@ -2,18 +2,17 @@ import { inject, injectable } from "inversify";
 import type { Logger } from "winston";
 
 import type { User } from "@/entity";
-import { type UserRegisterDto, zCreateUser } from "@/models";
+import { type UserRegisterDto } from "@/models";
 import { type IUserRepository, UserRepository } from "@/repository";
 import { LoggingService } from "@/services/logger";
-import { AppError, ErrorCause } from "@/types/errors";
 import type { Result } from "@/types/helper";
 import { Err, Ok } from "@/utils";
 
 export interface IUserUsecase {
-  register(dto: UserRegisterDto): Promise<Result<User>>;
-  update(): Promise<Result<unknown>>;
-  delete(): Promise<Result<unknown>>;
-  getByID(id: string): Promise<Result<User>>;
+  registerUser(dto: UserRegisterDto): Promise<Result<User>>;
+  updateUser(): Promise<Result<unknown>>;
+  deleteUser(): Promise<Result<unknown>>;
+  getUserById(id: string): Promise<Result<User>>;
 }
 
 @injectable("Singleton")
@@ -27,19 +26,19 @@ export class UserUsecase implements IUserUsecase {
     this._logger = this._loggerInstance.withLabel("UserUsecase");
   }
 
-  async register(dto: UserRegisterDto): Promise<Result<User>> {
+  async registerUser(dto: UserRegisterDto): Promise<Result<User>> {
     this._logger.debug("registering user", { ...dto, password: null });
-    const validatedData = zCreateUser.safeParse(dto);
-    if (!validatedData.success) {
-      return Err(AppError.new("Invalid request payload", ErrorCause.VALIDATION_ERROR));
-    }
 
-    // NOTE: mending pakai bun atau library dari nodejs untuk password hashing?
-    // secara default fungsi .hash() pada Bun.password menggunakan argon2
-    // jika ingin menggunakan bcrypt bisa tambahkan nilai string "bcrypt" pada parameter kedua
-    validatedData.data.password = await Bun.password.hash(validatedData.data.password);
+    const userPwd = await Bun.password.hash(dto.password);
 
-    const [user, err] = await this._userRepo.create(validatedData.data);
+    const userObject: Partial<User> = {
+      email: dto.email,
+      first_name: dto.first_name,
+      last_name: dto.last_name,
+      password_hash: userPwd,
+    };
+
+    const [user, err] = await this._userRepo.create(userObject);
     if (err) {
       return Err(err);
     }
@@ -47,16 +46,16 @@ export class UserUsecase implements IUserUsecase {
     return Ok(user);
   }
 
-  update(): Promise<Result<unknown>> {
+  updateUser(): Promise<Result<unknown>> {
     throw new Error("Method not implemented.");
   }
 
-  delete(): Promise<Result<unknown>> {
+  deleteUser(): Promise<Result<unknown>> {
     throw new Error("Method not implemented.");
   }
 
-  async getByID(id: string): Promise<Result<User>> {
-    const [user, err] = await this._userRepo.find(id);
+  async getUserById(id: string): Promise<Result<User>> {
+    const [user, err] = await this._userRepo.get(id);
     if (err) {
       return Err(err);
     }

@@ -21,7 +21,7 @@ export class UserController {
     this._logger = this._loggerInstance.withLabel("UserController");
   }
   public registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const [result, err] = await this._userUc.register(req.body);
+    const [result, err] = await this._userUc.registerUser(req.body);
     if (err) {
       next(err);
       return;
@@ -38,7 +38,7 @@ export class UserController {
   };
 
   public me = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const [user, err] = await this._userUc.getByID(res.locals.user.id);
+    const [user, err] = await this._userUc.getUserById(res.locals.user.id);
     if (err) {
       next(err);
       return;

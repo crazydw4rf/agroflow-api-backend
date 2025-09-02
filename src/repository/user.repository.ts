@@ -4,20 +4,16 @@ import type { Logger } from "winston";
 
 import type { User } from "@/entity";
 import { Prisma } from "@/generated/prisma/client";
-import type { UserCreateInput, UserModel, UserUpdateInput } from "@/models";
+import type { UserModel } from "@/models";
 import { LoggingService } from "@/services/logger";
 import { AppError, ErrorCause } from "@/types/errors";
-import type { Result } from "@/types/helper";
+import type { BaseRepositoryInterface, Result } from "@/types/helper";
 import { UserModelSym } from "@/types/symbols";
 import { Err, Ok } from "@/utils";
 
-export interface IUserRepository {
-  create(user: UserCreateInput): Promise<Result<User>>;
-  find(id: string): Promise<Result<User>>;
+export interface IUserRepository extends BaseRepositoryInterface<User> {
   findByEmail(email: string): Promise<Result<User>>;
   findMany(offset: number, limit: number): Promise<Result<User[]>>;
-  update(id: string, user: UserUpdateInput): Promise<Result<User>>;
-  delete(id: string): Promise<Result<null>>;
 }
 
 @injectable("Singleton")
@@ -31,21 +27,22 @@ export class UserRepository implements IUserRepository {
     this._logger = this._loggerInstance.withLabel("UserRepository");
   }
 
-  async create(user: UserCreateInput): Promise<Result<User>> {
+  async create(data: User): Promise<Result<User>> {
     try {
-      const createdUser = await this._user.create({ data: { ...user } });
-      this._logger.debug("new user created", { ...user, password: undefined });
+      const createdUser = await this._user.create({ data: { ...data } });
+      this._logger.debug("new user created", { ...data, password_hash: undefined });
+
       return Ok(createdUser);
     } catch (e) {
       return this.handleError(e);
     }
   }
 
-  async find(id: string): Promise<Result<User>> {
+  async get(id: string): Promise<Result<User>> {
     try {
       const user = await this._user.findFirst({ where: { id } });
       if (!user) {
-        return Err(AppError.new("User not found", ErrorCause.ENTRY_NOT_FOUND));
+        return Err(AppError.new("user not found", ErrorCause.ENTRY_NOT_FOUND));
       }
 
       return Ok(user);
@@ -58,7 +55,7 @@ export class UserRepository implements IUserRepository {
     try {
       const user = await this._user.findFirst({ where: { email } });
       if (!user) {
-        return Err(AppError.new("User not found", ErrorCause.ENTRY_NOT_FOUND));
+        return Err(AppError.new("user not found", ErrorCause.ENTRY_NOT_FOUND));
       }
 
       return Ok(user);
@@ -72,11 +69,11 @@ export class UserRepository implements IUserRepository {
       const users = await this._user.findMany({
         skip: offset,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
       });
 
       if (users.length <= 0) {
-        return Err(AppError.new("No users found", ErrorCause.ENTRY_NOT_FOUND));
+        return Err(AppError.new("no users found", ErrorCause.ENTRY_NOT_FOUND));
       }
 
       return Ok(users);
@@ -85,36 +82,36 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async update(id: string, user: UserUpdateInput): Promise<Result<User>> {
+  async update(data: User): Promise<Result<User>> {
     try {
-      const updatedUser = await this._user.update({
-        where: { id },
-        data: { ...user },
+      const user = await this._user.update({
+        where: { id: data.id },
+        data: { ...data },
       });
-      return Ok(updatedUser);
+      return Ok(user);
     } catch (e) {
       return this.handleError(e);
     }
   }
 
-  async delete(id: string): Promise<Result<null>> {
+  async delete(id: string): Promise<Result<boolean>> {
     try {
       await this._user.delete({ where: { id } });
-      return Ok(null);
+      return Ok(true);
     } catch (e) {
       return this.handleError(e);
     }
   }
 
-  protected handleError(e: any): Result<any> {
+  private handleError(e: any): Result<any> {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2002") {
-        return Err(AppError.new("Unique constraint violation", ErrorCause.DUPLICATE_ENTRY));
+        return Err(AppError.new("email already exists", ErrorCause.DUPLICATE_ENTRY));
       } else if (e.code === "P2025") {
-        return Err(AppError.new("Entry not found", ErrorCause.ENTRY_NOT_FOUND));
+        return Err(AppError.new("user not found", ErrorCause.ENTRY_NOT_FOUND));
       }
       return Err(AppError.new(e.message, ErrorCause.DATABASE_ERROR));
     }
-    return Err(AppError.new("An unknown error occurred: ".concat(e as string), ErrorCause.UNKNOWN_ERROR));
+    return Err(AppError.new("an unknown error occurred: ".concat(e as string), ErrorCause.UNKNOWN_ERROR));
   }
 }
