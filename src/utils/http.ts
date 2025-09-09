@@ -8,10 +8,11 @@ import type Merror from "./merror";
 export interface HttpResponse {
   data?: any;
   error?: string;
+  code?: number;
 }
 
-export function httpResponse(res: Response, code: number, body: HttpResponse): void {
-  res.status(code).json(body);
+export function httpResponse(res: Response, code: number, data: object): void {
+  res.status(code).json({ data, code });
 }
 
 export function httpError(res: Response, err: Merror): void {

@@ -6,6 +6,7 @@ const zEnvConfig = zod.object({
   APP_HOST: zod.string().default("localhost"),
   APP_PORT: zod.coerce.number().default(3000),
   APP_ENV: zod.enum(["development", "production", "test"]).default("development"),
+  DATABASE_URL: zod.url(),
   JWT_ACCESS_SECRET: zod.string(),
   JWT_REFRESH_SECRET: zod.string(),
   CORS_ORIGIN: zod.string().default("http://localhost:3000"),

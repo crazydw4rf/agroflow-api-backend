@@ -4,11 +4,10 @@ import type { Logger } from "winston";
 
 import type { User } from "@/entity";
 import { Prisma } from "@/generated/prisma/client";
-import type { UserModel } from "@/models";
 import { LoggingService } from "@/services/logger";
+import PrismaService from "@/services/prisma";
 import { AppError, ErrorCause } from "@/types/errors";
 import type { BaseRepositoryInterface, Result } from "@/types/helper";
-import { UserModelSym } from "@/types/symbols";
 import { Err, Ok } from "@/utils";
 
 export interface IUserRepository extends BaseRepositoryInterface<User> {
@@ -21,7 +20,7 @@ export class UserRepository implements IUserRepository {
   private _logger: Logger;
 
   constructor(
-    @inject(UserModelSym) private readonly _user: UserModel,
+    @inject(PrismaService) private readonly _prisma: PrismaService,
     @inject(LoggingService) private readonly _loggerInstance: LoggingService,
   ) {
     this._logger = this._loggerInstance.withLabel("UserRepository");
@@ -29,7 +28,7 @@ export class UserRepository implements IUserRepository {
 
   async create(data: User): Promise<Result<User>> {
     try {
-      const createdUser = await this._user.create({ data: { ...data } });
+      const createdUser = await this._prisma.user.create({ data: { ...data } });
       this._logger.debug("new user created", { ...data, password_hash: undefined });
 
       return Ok(createdUser);
@@ -40,7 +39,7 @@ export class UserRepository implements IUserRepository {
 
   async get(id: string): Promise<Result<User>> {
     try {
-      const user = await this._user.findFirst({ where: { id } });
+      const user = await this._prisma.user.findFirst({ where: { id } });
       if (!user) {
         return Err(AppError.new("user not found", ErrorCause.ENTRY_NOT_FOUND));
       }
@@ -53,7 +52,7 @@ export class UserRepository implements IUserRepository {
 
   async findByEmail(email: string): Promise<Result<User>> {
     try {
-      const user = await this._user.findFirst({ where: { email } });
+      const user = await this._prisma.user.findFirst({ where: { email } });
       if (!user) {
         return Err(AppError.new("user not found", ErrorCause.ENTRY_NOT_FOUND));
       }
@@ -66,7 +65,7 @@ export class UserRepository implements IUserRepository {
 
   async findMany(offset: number, limit: number): Promise<Result<User[]>> {
     try {
-      const users = await this._user.findMany({
+      const users = await this._prisma.user.findMany({
         skip: offset,
         take: limit,
         orderBy: { created_at: "desc" },
@@ -82,10 +81,10 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async update(data: User): Promise<Result<User>> {
+  async update(id: string, data: User): Promise<Result<User>> {
     try {
-      const user = await this._user.update({
-        where: { id: data.id },
+      const user = await this._prisma.user.update({
+        where: { id },
         data: { ...data },
       });
       return Ok(user);
@@ -96,7 +95,7 @@ export class UserRepository implements IUserRepository {
 
   async delete(id: string): Promise<Result<boolean>> {
     try {
-      await this._user.delete({ where: { id } });
+      await this._prisma.user.delete({ where: { id } });
       return Ok(true);
     } catch (e) {
       return this.handleError(e);

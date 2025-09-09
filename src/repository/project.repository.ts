@@ -2,23 +2,22 @@ import { inject, injectable } from "inversify";
 
 import type { Project } from "@/entity";
 import { Prisma } from "@/generated/prisma/client";
-import type { ProjectModel } from "@/models";
+import PrismaService from "@/services/prisma";
 import { AppError, ErrorCause } from "@/types/errors";
 import type { BaseRepositoryInterface, Result } from "@/types/helper";
-import { ProjectModelSym } from "@/types/symbols";
 import { Err, Ok } from "@/utils";
 
 export interface IProjectRepository extends BaseRepositoryInterface<Project> {
-  getMany(userId: string): Promise<Result<Project[]>>;
+  getMany(userId: string, skip?: number, limit?: number): Promise<Result<Project[]>>;
 }
 
 @injectable("Singleton")
 export class ProjectRepository implements IProjectRepository {
-  constructor(@inject(ProjectModelSym) private readonly _project: ProjectModel) {}
+  constructor(@inject(PrismaService) private readonly _prisma: PrismaService) {}
 
   async create(data: Project): Promise<Result<Project>> {
     try {
-      const project = await this._project.create({
+      const project = await this._prisma.project.create({
         data: { ...data },
       });
 
@@ -30,7 +29,7 @@ export class ProjectRepository implements IProjectRepository {
 
   async get(id: string): Promise<Result<Project>> {
     try {
-      const project = await this._project.findFirstOrThrow({
+      const project = await this._prisma.project.findFirstOrThrow({
         where: { id },
       });
       return Ok(project);
@@ -39,11 +38,11 @@ export class ProjectRepository implements IProjectRepository {
     }
   }
 
-  async update(data: Project): Promise<Result<Project>> {
+  async update(id: string, data: Project): Promise<Result<Project>> {
     try {
-      const project = await this._project.update({
-        where: { id: data.id },
-        data: { ...data },
+      const project = await this._prisma.project.update({
+        where: { id },
+        data,
       });
 
       return Ok(project);
@@ -54,7 +53,7 @@ export class ProjectRepository implements IProjectRepository {
 
   async delete(id: string): Promise<Result<boolean>> {
     try {
-      await this._project.delete({
+      await this._prisma.project.delete({
         where: { id },
       });
 
@@ -64,10 +63,12 @@ export class ProjectRepository implements IProjectRepository {
     }
   }
 
-  async getMany(user_id: string): Promise<Result<Project[]>> {
+  async getMany(userId: string, skip = 0, limit = 5): Promise<Result<Project[]>> {
     try {
-      const projects = await this._project.findMany({
-        where: { user_id },
+      const projects = await this._prisma.project.findMany({
+        where: { user_id: userId },
+        skip,
+        take: limit,
       });
 
       if (!projects || projects.length <= 0) {

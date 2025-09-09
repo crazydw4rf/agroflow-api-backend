@@ -11,6 +11,6 @@ export type ZodPartial<T> = PartialType<T, ZodType> | Record<string, ZodType>;
 export interface BaseRepositoryInterface<T> {
   create(data: any): Promise<Result<T>>;
   get(id: string): Promise<Result<T>>;
-  update(data: any): Promise<Result<T>>;
+  update(id: string, data: any): Promise<Result<T>>;
   delete(id: string): Promise<Result<boolean>>;
 }

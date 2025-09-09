@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { inject, injectable } from "inversify";
 import type { Logger } from "winston";
 
 import type { UserWithToken } from "@/entity";
+import { zLoginUser } from "@/models";
 import { LoggingService } from "@/services/logger";
+import type { ExtendedRequest, ExtendedResponse } from "@/types/express";
 import { AuthUsecase } from "@/usecase";
 import { httpResponse, sanitizeUser } from "@/utils";
+import { ValidatePayload } from "@/utils/decorator";
 
 import RouterPaths from "../path";
 
@@ -20,10 +23,14 @@ export class AuthController {
     @inject(AuthUsecase) private readonly _authUc: AuthUsecase,
     @inject(LoggingService) private readonly _loggerInstance: LoggingService,
   ) {
-    this._logger = this._loggerInstance.withLabel("AuthUsecase");
+    this._logger = this._loggerInstance.withLabel("AuthController");
+
+    this.loginUser = this.loginUser.bind(this);
   }
 
-  public loginUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  @ValidatePayload(zLoginUser)
+  async loginUser(req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> {
+    this._logger.debug("login user", { ...req.body, password: undefined });
     const [user, err] = await this._authUc.login(req.body);
     if (err) {
       next(err);
@@ -32,10 +39,10 @@ export class AuthController {
 
     this.setAuthCookie(res, user);
 
-    httpResponse(res, StatusCodes.OK, { data: sanitizeUser(user) });
-  };
+    httpResponse(res, StatusCodes.OK, sanitizeUser(user));
+  }
 
-  public refreshToken = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public refreshToken = async (_req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> => {
     const [user, err] = await this._authUc.refreshToken(res.locals.user.id);
     if (err) {
       next(err);
@@ -47,7 +54,7 @@ export class AuthController {
     res.sendStatus(StatusCodes.NO_CONTENT);
   };
 
-  public logoutUser = (_req: Request, res: Response, _next: NextFunction): void => {
+  public logoutUser = (_req: ExtendedRequest, res: ExtendedResponse, _next: NextFunction): void => {
     this._logger.debug("logging out user", res.locals.user);
     res.clearCookie("token");
     res.clearCookie("refreshToken");
@@ -55,7 +62,7 @@ export class AuthController {
     res.sendStatus(StatusCodes.NO_CONTENT);
   };
 
-  protected setAuthCookie(res: Response, user: UserWithToken): void {
+  protected setAuthCookie(res: ExtendedResponse, user: UserWithToken): void {
     res.cookie("token", user.accessToken, {
       httpOnly: true,
       sameSite: "strict",

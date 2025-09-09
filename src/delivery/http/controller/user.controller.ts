@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { inject, injectable } from "inversify";
 import type { Logger } from "winston";
 
+import { zCreateUser } from "@/models";
 import { LoggingService } from "@/services/logger";
+import type { ExtendedRequest, ExtendedResponse } from "@/types/express";
 import { type IUserUsecase, UserUsecase } from "@/usecase/user.usecase";
-import { sanitizeUser } from "@/utils";
-import { httpResponse } from "@/utils/http";
+import { httpResponse, sanitizeUser, ValidatePayload } from "@/utils";
 
 @injectable("Singleton")
 export class UserController {
@@ -19,31 +20,35 @@ export class UserController {
     @inject(LoggingService) private readonly _loggerInstance: LoggingService,
   ) {
     this._logger = this._loggerInstance.withLabel("UserController");
+
+    this.registerUser = this.registerUser.bind(this);
   }
-  public registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const [result, err] = await this._userUc.registerUser(req.body);
+
+  @ValidatePayload(zCreateUser)
+  public async registerUser(req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> {
+    const [user, err] = await this._userUc.registerUser(req.body);
     if (err) {
       next(err);
       return;
     }
 
-    httpResponse(res, StatusCodes.CREATED, { data: sanitizeUser(result) });
-  };
+    httpResponse(res, StatusCodes.CREATED, sanitizeUser(user));
+  }
 
-  public deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public deleteUser = async (req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> => {
     throw new Error("Method not implemented.");
   };
-  public updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public updateUser = async (req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> => {
     throw new Error("Method not implemented.");
   };
 
-  public me = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public me = async (_req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> => {
     const [user, err] = await this._userUc.getUserById(res.locals.user.id);
     if (err) {
       next(err);
       return;
     }
 
-    httpResponse(res, StatusCodes.OK, { data: sanitizeUser(user) });
+    httpResponse(res, StatusCodes.OK, sanitizeUser(user));
   };
 }
