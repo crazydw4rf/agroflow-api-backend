@@ -6,8 +6,14 @@
   "license": "MIT",
   "version": "0.0.1",
   "scripts": {
-    "db:schema:gen": "prisma generate",
-    "db:schema:fmt": "prisma format",
+    "prisma:gen": "prisma generate",
+    "prisma:seed": "prisma db seed",
+    "prisma:fmt": "prisma format",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:push": "prisma db push",
+    "prisma:push:reset": "prisma db push --force-reset",
+    "compose:dev:up": "docker compose -f compose.dev.yaml up",
+    "compose:dev:down": "docker compose -f compose.dev.yaml down",
     "postinstall": "prisma generate"
   },
   "module": "src/index.ts",
@@ -33,6 +39,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
+    "@prisma/extension-accelerate": "^2.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
