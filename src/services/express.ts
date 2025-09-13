@@ -23,7 +23,7 @@ export class ExpressService {
     @inject(ConfigService) private readonly _config: ConfigService,
     @inject(LoggingService) private readonly _loggerInstance: LoggingService,
     @multiInject(HTTPRouterSym) private readonly _httpRouters: IHTTPRouter[],
-    @inject(AppMiddleware) private readonly _appMiddleware: AppMiddleware,
+    @inject(AppMiddleware) private readonly _appMiddleware: AppMiddleware
   ) {
     this._logger = this._loggerInstance.withLabel("ExpressService");
 

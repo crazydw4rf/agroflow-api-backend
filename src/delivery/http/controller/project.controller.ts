@@ -16,7 +16,7 @@ export class ProjectController {
 
   constructor(
     @inject(ProjectUsecase) private readonly _projectUc: ProjectUsecase,
-    @inject(LoggingService) private readonly _loggerInstance: LoggingService,
+    @inject(LoggingService) private readonly _loggerInstance: LoggingService
   ) {
     this._logger = this._loggerInstance.withLabel("ProjectController");
 
@@ -50,7 +50,8 @@ export class ProjectController {
 
   @ValidateQuery(zProjectGetMany)
   public async getProjects(req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> {
-    const [projects, err] = await this._projectUc.getProjectMany(res.locals.user.id, req.query); // Project[]
+    this._logger.debug("getting projects", { userId: res.locals.user.id, query: req.query });
+    const [projects, err] = await this._projectUc.getProjectMany(res.locals.user.id, res.locals.query); // Project[]
     if (err) {
       next(err);
       return;

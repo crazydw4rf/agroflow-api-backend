@@ -11,11 +11,12 @@ type Locals = {
     id: string;
     role: string;
   };
+  query: Record<string, any> & PaginationParams;
 };
 
 type PaginationParams = {
-  skip: number;
-  take: number;
+  skip?: number;
+  take?: number;
 };
 
 export type ExtendedRequest = Request<RequestParams, any, any, Record<string, any> & PaginationParams>;

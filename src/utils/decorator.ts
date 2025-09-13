@@ -1,16 +1,17 @@
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request } from "express";
 import type { ZodObject } from "zod/v4";
 
 import { AppError, ErrorCause } from "@/types/errors";
+import type { ExtendedResponse } from "@/types/express";
 
-type ExpressFunctionHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
+type ExpressFunctionHandler = (req: Request, res: ExtendedResponse, next: NextFunction) => Promise<void>;
 
 export function ValidatePayload(z: ZodObject): MethodDecorator {
   // @ts-expect-error: Gak tau dah typescript bilang error mulu disini
   return function (
     _target: object,
     _propertyKey: string | symbol,
-    descriptor: TypedPropertyDescriptor<ExpressFunctionHandler>,
+    descriptor: TypedPropertyDescriptor<ExpressFunctionHandler>
   ): void {
     const func = descriptor.value!;
 
@@ -32,15 +33,14 @@ export function ValidateQuery(z: ZodObject): MethodDecorator {
   return function (
     _target: object,
     _propertyKey: string | symbol,
-    descriptor: TypedPropertyDescriptor<ExpressFunctionHandler>,
+    descriptor: TypedPropertyDescriptor<ExpressFunctionHandler>
   ): void {
     const func = descriptor.value!;
 
     descriptor.value = async function (req, res, next) {
       try {
         const parsed = z.parse(req.query);
-        // @ts-expect-error: TypeScript doesn't like this but it works
-        req.query = parsed;
+        res.locals.query = parsed;
         // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-vars
       } catch (e) {
         throw AppError.new("query validation error", ErrorCause.VALIDATION_ERROR);
@@ -54,4 +54,3 @@ export function ValidateQuery(z: ZodObject): MethodDecorator {
 // TODO: buat decorator untuk validasi req.params
 
 // TODO: buat decorator untuk validasi dan verifikasi jwt token
-

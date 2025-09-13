@@ -13,18 +13,20 @@ export const zFarmCreate = z.object({
   product_price: z.number().positive("product price must be a positive number"),
   comodity: z.string().min(1, "commodity is required"),
   farm_status: z.enum(["ACTIVE", "HARVESTED"]).default("ACTIVE"),
-  soil_type: z.enum([
-    "ORGANOSOL",
-    "ANDOSOL", 
-    "LITOSOL",
-    "REGOSOL",
-    "VERTISOL",
-    "ALUVIAL",
-    "MEDISOL",
-    "PODZOLIK",
-    "GRUMUSOL",
-    "KAMBISOL"
-  ]).default("ORGANOSOL"),
+  soil_type: z
+    .enum([
+      "ORGANOSOL",
+      "ANDOSOL",
+      "LITOSOL",
+      "REGOSOL",
+      "VERTISOL",
+      "ALUVIAL",
+      "MEDISOL",
+      "PODZOLIK",
+      "GRUMUSOL",
+      "KAMBISOL",
+    ])
+    .default("ORGANOSOL"),
   planted_at: z.date().default(() => new Date()),
   target_harvest_date: z.date(),
   actual_harvest_date: z.date().optional(),
@@ -35,8 +37,8 @@ export const zFarmCreate = z.object({
 export const zFarmUpdate = zFarmCreate.partial().omit({ project_id: true });
 
 export const zFarmGetMany = z.object({
-  skip: z.string().optional().default("0").transform(val => parseInt(val, 10)).pipe(z.number().min(0)),
-  take: z.string().optional().default("5").transform(val => parseInt(val, 10)).pipe(z.number().min(1).max(20)),
+  skip: z.coerce.number().min(0).default(0),
+  take: z.coerce.number().min(1).max(20).default(5),
 });
 
 export type FarmCreateDto = z.infer<typeof zFarmCreate>;

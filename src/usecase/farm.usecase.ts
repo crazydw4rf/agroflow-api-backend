@@ -13,7 +13,7 @@ export interface IFarmUsecase {
   updateFarm(id: string, dto: FarmUpdateDto): Promise<Result<Farm>>;
   deleteFarm(id: string): Promise<Result<boolean>>;
   getFarmById(id: string): Promise<Result<Farm>>;
-  getFarmsByProject(projectId: string, page: { skip: number; take: number }): Promise<Result<Farm[]>>;
+  getFarmsByProject(projectId: string, page: { skip?: number; take?: number }): Promise<Result<Farm[]>>;
   getFarmByProjectAndId(projectId: string, farmId: string): Promise<Result<Farm>>;
 }
 
@@ -68,7 +68,7 @@ export class FarmUsecase implements IFarmUsecase {
     return Ok(farm);
   }
 
-  async getFarmsByProject(projectId: string, page = { skip: 0, take: 10 }): Promise<Result<Farm[]>> {
+  async getFarmsByProject(projectId: string, page: { skip?: number; take?: number }): Promise<Result<Farm[]>> {
     const [farms, err] = await this._farmRepo.findManyByProject(projectId, page);
     if (err) {
       return Err(err);

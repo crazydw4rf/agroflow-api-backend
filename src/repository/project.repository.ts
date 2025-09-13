@@ -8,7 +8,7 @@ import type { BaseRepositoryInterface, Result } from "@/types/helper";
 import { Err, Ok } from "@/utils";
 
 export interface IProjectRepository extends BaseRepositoryInterface<Project> {
-  getMany(userId: string, page: { skip: number; take: number }): Promise<Result<Project[]>>;
+  getMany(userId: string, page: { skip?: number; take?: number }): Promise<Result<Project[]>>;
 }
 
 @injectable("Singleton")

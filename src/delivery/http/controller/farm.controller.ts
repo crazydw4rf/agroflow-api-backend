@@ -16,7 +16,7 @@ export class FarmController {
 
   constructor(
     @inject(FarmUsecase) private readonly _farmUc: FarmUsecase,
-    @inject(LoggingService) private readonly _loggerInstance: LoggingService,
+    @inject(LoggingService) private readonly _loggerInstance: LoggingService
   ) {
     this._logger = this._loggerInstance.withLabel("FarmController");
 
@@ -50,7 +50,7 @@ export class FarmController {
 
   @ValidateQuery(zFarmGetMany)
   public async getFarmsByProject(req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> {
-    const [farms, err] = await this._farmUc.getFarmsByProject(req.params.projectId, req.query);
+    const [farms, err] = await this._farmUc.getFarmsByProject(req.params.projectId, res.locals.query);
     if (err) {
       next(err);
       return;
@@ -79,7 +79,11 @@ export class FarmController {
     httpResponse(res, StatusCodes.OK, farm);
   };
 
-  public getFarmByProjectAndId = async (req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> => {
+  public getFarmByProjectAndId = async (
+    req: ExtendedRequest,
+    res: ExtendedResponse,
+    next: NextFunction
+  ): Promise<void> => {
     const [farm, err] = await this._farmUc.getFarmByProjectAndId(req.params.projectId, req.params.farmId);
     if (err) {
       next(err);

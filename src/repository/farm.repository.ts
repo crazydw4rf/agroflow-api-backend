@@ -10,7 +10,7 @@ import type { BaseRepositoryInterface, Result } from "@/types/helper";
 import { Err, Ok } from "@/utils";
 
 export interface IFarmRepository extends BaseRepositoryInterface<Farm> {
-  findManyByProject(projectId: string, page: { skip: number; take: number }): Promise<Result<Farm[]>>;
+  findManyByProject(projectId: string, page: { skip?: number; take?: number }): Promise<Result<Farm[]>>;
   findByProjectAndId(projectId: string, farmId: string): Promise<Result<Farm>>;
 }
 
@@ -20,16 +20,16 @@ export class FarmRepository implements IFarmRepository {
 
   constructor(
     @inject(PrismaService) private readonly _prisma: PrismaService,
-    @inject(LoggingService) private readonly _loggerInstance: LoggingService,
+    @inject(LoggingService) private readonly _loggerInstance: LoggingService
   ) {
     this._logger = this._loggerInstance.withLabel("FarmRepository");
   }
 
   async create(data: Farm): Promise<Result<Farm>> {
     try {
-      const farm = await this._prisma.farm.create({ 
+      const farm = await this._prisma.farm.create({
         data: { ...data },
-        include: { project: true }
+        include: { project: true },
       });
       this._logger.debug("new farm created", { ...data });
 
@@ -41,9 +41,9 @@ export class FarmRepository implements IFarmRepository {
 
   async get(id: string): Promise<Result<Farm>> {
     try {
-      const farm = await this._prisma.farm.findFirst({ 
+      const farm = await this._prisma.farm.findFirst({
         where: { id },
-        include: { project: true }
+        include: { project: true },
       });
       if (!farm) {
         return Err(AppError.new("farm not found", ErrorCause.ENTRY_NOT_FOUND));
@@ -57,12 +57,12 @@ export class FarmRepository implements IFarmRepository {
 
   async findByProjectAndId(projectId: string, farmId: string): Promise<Result<Farm>> {
     try {
-      const farm = await this._prisma.farm.findFirst({ 
-        where: { 
+      const farm = await this._prisma.farm.findFirst({
+        where: {
           id: farmId,
-          project_id: projectId
+          project_id: projectId,
         },
-        include: { project: true }
+        include: { project: true },
       });
       if (!farm) {
         return Err(AppError.new("farm not found", ErrorCause.ENTRY_NOT_FOUND));
@@ -80,7 +80,7 @@ export class FarmRepository implements IFarmRepository {
         where: { project_id: projectId },
         ...page,
         orderBy: { created_at: "desc" },
-        include: { project: true }
+        include: { project: true },
       });
 
       return Ok(farms);
@@ -94,7 +94,7 @@ export class FarmRepository implements IFarmRepository {
       const farm = await this._prisma.farm.update({
         where: { id },
         data: { ...data },
-        include: { project: true }
+        include: { project: true },
       });
       return Ok(farm);
     } catch (e) {
