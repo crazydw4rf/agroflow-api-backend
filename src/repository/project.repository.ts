@@ -8,7 +8,7 @@ import type { BaseRepositoryInterface, Result } from "@/types/helper";
 import { Err, Ok } from "@/utils";
 
 export interface IProjectRepository extends BaseRepositoryInterface<Project> {
-  getMany(userId: string, skip?: number, limit?: number): Promise<Result<Project[]>>;
+  getMany(userId: string, page: { skip: number; take: number }): Promise<Result<Project[]>>;
 }
 
 @injectable("Singleton")
@@ -63,17 +63,18 @@ export class ProjectRepository implements IProjectRepository {
     }
   }
 
-  async getMany(userId: string, skip = 0, limit = 5): Promise<Result<Project[]>> {
+  async getMany(userId: string, page: { skip: number; take: number }): Promise<Result<Project[]>> {
     try {
       const projects = await this._prisma.project.findMany({
         where: { user_id: userId },
-        skip,
-        take: limit,
+        ...page,
       });
 
-      if (!projects || projects.length <= 0) {
-        return Err(AppError.new("no projects found", ErrorCause.ENTRY_NOT_FOUND));
-      }
+      // if (!projects || projects.length <= 0) {
+      //   return Err(AppError.new("no projects found", ErrorCause.ENTRY_NOT_FOUND));
+      // }
+
+      // kalau gak ada project, return array kosong aja
 
       return Ok(projects);
     } catch (e) {

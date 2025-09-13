@@ -1,19 +1,22 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, { type Express } from "express";
+import express, { Router } from "express";
+import { StatusCodes } from "http-status-codes";
 import { inject, injectable, multiInject } from "inversify";
 import type { Logger } from "winston";
 
 import { AppMiddleware } from "@/delivery/http/middleware";
 import type { IHTTPRouter } from "@/types/http";
 import { HTTPRouterSym } from "@/types/symbols";
+import { httpResponse } from "@/utils";
 
 import { ConfigService } from "./config";
 import { LoggingService } from "./logger";
 
 @injectable("Singleton")
 export class ExpressService {
-  private _express: Express = express();
+  private _express = express();
+  private _routerv1 = Router();
   private _logger: Logger;
 
   constructor(
@@ -31,12 +34,13 @@ export class ExpressService {
 
     this._express.use(this._appMiddleware.requestId, this._appMiddleware.httpLogger);
 
-    // FIXME: tampilkan halaman dokumentasi
+    // TODO: tampilkan halaman dokumentasi
     this._express.get("/", (_, res) => {
-      res.status(200).json({ hello: "world" });
+      httpResponse(res, StatusCodes.OK, { message: "Agroflow Backend API Service" });
     });
 
     this.registerRoutes();
+    this._express.use("/v1", this._routerv1);
 
     this._express.use(this._appMiddleware.errorHandling);
   }
@@ -44,7 +48,7 @@ export class ExpressService {
   private registerRoutes(): void {
     for (const r of this._httpRouters) {
       this._logger.info(`registering route ${r.path}`);
-      this._express.use(r.path, r.router);
+      this._routerv1.use(r.path, r.router);
     }
   }
 

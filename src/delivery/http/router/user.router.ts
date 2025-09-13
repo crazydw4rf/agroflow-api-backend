@@ -6,12 +6,11 @@ import type { IHTTPRouter } from "@/types/http";
 
 import { UserController } from "../controller";
 import { AuthMiddleware } from "../middleware";
-import RouterPaths from "../path";
 
 @injectable("Singleton")
 export class UserRouter implements IHTTPRouter {
-  path = RouterPaths.USER;
-  router = express.Router();
+  readonly path = "/users";
+  readonly router = express.Router();
 
   constructor(
     @inject(UserController) private readonly _userCtrl: UserController,

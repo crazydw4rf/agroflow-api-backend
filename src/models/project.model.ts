@@ -16,8 +16,8 @@ export const zProjectCreate = z.object({
 export const zProjectUpdate = zProjectCreate.partial();
 
 export const zProjectGetMany = z.object({
-  skip: z.number().min(0).default(0),
-  limit: z.number().min(1).max(20).default(5),
+  skip: z.string().optional().default("0").transform(val => parseInt(val, 10)).pipe(z.number().min(0)),
+  take: z.string().optional().default("5").transform(val => parseInt(val, 10)).pipe(z.number().min(1).max(20)),
 });
 
 export type ProjectCreateDto = z.infer<typeof zProjectCreate>;

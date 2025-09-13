@@ -6,12 +6,11 @@ import { ProjectController } from "@/delivery/http/controller";
 import type { IHTTPRouter } from "@/types/http";
 
 import { AuthMiddleware } from "../middleware";
-import RouterPaths from "../path";
 
 @injectable("Singleton")
 export class ProjectRouter implements IHTTPRouter {
-  path = RouterPaths.PROJECT;
-  router = express.Router();
+  readonly path = "/projects";
+  readonly router = express.Router();
 
   constructor(
     @inject(ProjectController) private readonly _projectCtrl: ProjectController,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Router } from "express";
 import { inject, injectable } from "inversify";
 
@@ -5,12 +6,11 @@ import type { IHTTPRouter } from "@/types/http";
 
 import { AuthController } from "../controller";
 import { AuthMiddleware } from "../middleware";
-import RouterPaths from "../path";
 
 @injectable("Singleton")
 export class AuthRouter implements IHTTPRouter {
-  path = RouterPaths.AUTH;
-  router = Router();
+  readonly path = "/auth";
+  readonly router = Router();
 
   constructor(
     @inject(AuthMiddleware) private readonly _authMw: AuthMiddleware,

@@ -13,7 +13,7 @@ export interface IProjectUsecase {
   updateProject(id: string, dto: ProjectUpdateDto): Promise<Result<Project>>;
   deleteProject(id: string): Promise<Result<boolean>>;
   getProjectById(id: string): Promise<Result<Project>>;
-  getProjectMany(userId: string, data: { skip: number; limit: number }): Promise<Result<Project[]>>;
+  getProjectMany(userId: string, page: { skip: number; take: number }): Promise<Result<Project[]>>;
 }
 
 @injectable("Singleton")
@@ -58,8 +58,8 @@ export class ProjectUsecase implements IProjectUsecase {
     return Ok(project);
   }
 
-  async getProjectMany(userId: string, data = { limit: 10, skip: 0 }): Promise<Result<Project[]>> {
-    const [projects, err] = await this._projectRepo.getMany(userId, data.skip, data.limit);
+  async getProjectMany(userId: string, page = { skip: 0, take: 10 }): Promise<Result<Project[]>> {
+    const [projects, err] = await this._projectRepo.getMany(userId, page);
     if (err) {
       return Err(err);
     }

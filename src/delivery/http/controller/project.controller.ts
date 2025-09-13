@@ -8,7 +8,7 @@ import { zProjectCreate, zProjectGetMany, zProjectUpdate } from "@/models";
 import { LoggingService } from "@/services/logger";
 import type { ExtendedRequest, ExtendedResponse } from "@/types/express";
 import { ProjectUsecase } from "@/usecase";
-import { httpResponse, ValidatePayload } from "@/utils";
+import { httpResponse, ValidatePayload, ValidateQuery } from "@/utils";
 
 @injectable("Singleton")
 export class ProjectController {
@@ -48,9 +48,9 @@ export class ProjectController {
     httpResponse(res, StatusCodes.OK, project);
   }
 
-  @ValidatePayload(zProjectGetMany)
+  @ValidateQuery(zProjectGetMany)
   public async getProjects(req: ExtendedRequest, res: ExtendedResponse, next: NextFunction): Promise<void> {
-    const [projects, err] = await this._projectUc.getProjectMany(res.locals.user.id, req.body); // Project[]
+    const [projects, err] = await this._projectUc.getProjectMany(res.locals.user.id, req.query); // Project[]
     if (err) {
       next(err);
       return;

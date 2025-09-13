@@ -9,9 +9,10 @@ const zEnvConfig = zod.object({
   DATABASE_URL: zod.url(),
   JWT_ACCESS_SECRET: zod.string(),
   JWT_REFRESH_SECRET: zod.string(),
-  CORS_ORIGIN: zod.string().default("http://localhost:3000"),
+  CORS_ORIGIN: zod.string().default("*"),
   REDIS_HOST: zod.string().default("localhost"),
   REDIS_PORT: zod.coerce.number().default(6379),
+  DATABASE_ACCELERATE: zod.coerce.boolean().default(true),
 });
 
 type EnvConfig = zod.infer<typeof zEnvConfig>;

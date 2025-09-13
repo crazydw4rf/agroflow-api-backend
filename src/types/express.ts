@@ -13,6 +13,11 @@ type Locals = {
   };
 };
 
-export type ExtendedRequest = Request<RequestParams>;
+type PaginationParams = {
+  skip: number;
+  take: number;
+};
+
+export type ExtendedRequest = Request<RequestParams, any, any, Record<string, any> & PaginationParams>;
 
 export type ExtendedResponse = Response<any, Locals>;

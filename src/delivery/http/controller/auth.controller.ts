@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import type { NextFunction } from "express";
+import type { NextFunction, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { inject, injectable } from "inversify";
 import type { Logger } from "winston";
@@ -12,8 +12,6 @@ import type { ExtendedRequest, ExtendedResponse } from "@/types/express";
 import { AuthUsecase } from "@/usecase";
 import { httpResponse, sanitizeUser } from "@/utils";
 import { ValidatePayload } from "@/utils/decorator";
-
-import RouterPaths from "../path";
 
 @injectable("Singleton")
 export class AuthController {
@@ -62,7 +60,7 @@ export class AuthController {
     res.sendStatus(StatusCodes.NO_CONTENT);
   };
 
-  protected setAuthCookie(res: ExtendedResponse, user: UserWithToken): void {
+  protected setAuthCookie(res: Response, user: UserWithToken): void {
     res.cookie("token", user.accessToken, {
       httpOnly: true,
       sameSite: "strict",
@@ -74,7 +72,7 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
-      path: `${RouterPaths.AUTH}/refresh`,
+      path: "/v1/auth/refresh",
       maxAge: 60 * 60 * 24 * 30 * 1000, // 1 bulan
     });
   }
