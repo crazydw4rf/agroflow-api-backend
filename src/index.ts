@@ -1,15 +1,15 @@
 import { Container } from "inversify";
 
-import { AuthController, ProjectController, UserController } from "@/delivery/http/controller";
+import { AuthController, FarmController, ProjectController, UserController } from "@/delivery/http/controller";
 import { AppMiddleware, AuthMiddleware } from "@/delivery/http/middleware";
-import { AuthRouter, ProjectRouter, UserRouter } from "@/delivery/http/router";
-import { ProjectRepository, UserRepository } from "@/repository";
+import { AuthRouter, FarmRouter, ProjectRouter, UserRouter } from "@/delivery/http/router";
+import { FarmRepository, ProjectRepository, UserRepository } from "@/repository";
 import { ConfigService } from "@/services/config";
 import { ExpressService } from "@/services/express";
 import { LoggingService } from "@/services/logger";
 import type { IHTTPRouter } from "@/types/http";
 import { HTTPRouterSym } from "@/types/symbols";
-import { AuthUsecase, ProjectUsecase, UserUsecase } from "@/usecase";
+import { AuthUsecase, FarmUsecase, ProjectUsecase, UserUsecase } from "@/usecase";
 
 import PrismaService from "./services/prisma";
 
@@ -22,6 +22,10 @@ function registerAppServices(c: Container): void {
   c.bind(ProjectUsecase).toSelf();
   c.bind(ProjectController).toSelf();
 
+  c.bind(FarmRepository).toSelf();
+  c.bind(FarmUsecase).toSelf();
+  c.bind(FarmController).toSelf();
+
   c.bind(AuthController).toSelf();
   c.bind(AuthUsecase).toSelf();
 
@@ -33,6 +37,7 @@ function registerAppServices(c: Container): void {
   c.bind<IHTTPRouter>(HTTPRouterSym).to(UserRouter);
   c.bind<IHTTPRouter>(HTTPRouterSym).to(AuthRouter);
   c.bind<IHTTPRouter>(HTTPRouterSym).to(ProjectRouter);
+  c.bind<IHTTPRouter>(HTTPRouterSym).to(FarmRouter);
 }
 
 function registerCoreServices(c: Container): void {

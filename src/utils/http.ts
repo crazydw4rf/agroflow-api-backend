@@ -18,23 +18,23 @@ export function httpResponse(res: Response, code: number, data: object): void {
 export function httpError(res: Response, err: Merror): void {
   const rootError = err.root;
 
-  const errMessage = rootError?.error.message ?? "An unexpected error occurred";
+  const message = rootError?.error.message ?? "An unexpected error occurred";
   switch (rootError?.error.cause) {
     case ErrorCause.DUPLICATE_ENTRY:
-      httpResponse(res, StatusCodes.CONFLICT, { error: errMessage });
+      httpResponse(res, StatusCodes.CONFLICT, { error: message });
       return;
     case ErrorCause.ENTRY_NOT_FOUND:
-      httpResponse(res, StatusCodes.NOT_FOUND, { error: errMessage });
+      httpResponse(res, StatusCodes.NOT_FOUND, { error: message });
       return;
     case ErrorCause.DATABASE_ERROR:
-      httpResponse(res, StatusCodes.INTERNAL_SERVER_ERROR, { error: errMessage });
+      httpResponse(res, StatusCodes.INTERNAL_SERVER_ERROR, { error: "database error occurred" });
       return;
     case ErrorCause.CREDENTIALS_ERROR:
     case ErrorCause.AUTHORIZATION_ERROR:
-      httpResponse(res, StatusCodes.UNAUTHORIZED, { error: errMessage });
+      httpResponse(res, StatusCodes.UNAUTHORIZED, { error: message });
       return;
     case ErrorCause.VALIDATION_ERROR:
-      httpResponse(res, StatusCodes.BAD_REQUEST, { error: errMessage });
+      httpResponse(res, StatusCodes.BAD_REQUEST, { error: message });
       return;
     default:
       httpResponse(res, StatusCodes.INTERNAL_SERVER_ERROR, { error: "unknown error occurred" });

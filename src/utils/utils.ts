@@ -38,11 +38,3 @@ export function sanitizeUser<T extends User>(user: T): T & UserWithToken {
     refreshToken: undefined,
   };
 }
-
-// export function handleValidationError(err: any): Error {
-//   if (err instanceof ZodError && err.issues.length > 0) {
-//     const error = err.issues[err.issues.length - 1]!;
-//   }
-//
-//   return new Error("Ok")
-// }

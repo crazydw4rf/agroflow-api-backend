@@ -27,7 +27,31 @@ export function ValidatePayload(z: ZodObject): MethodDecorator {
   };
 }
 
-// TODO: buat decorator untuk validasi req.params dan req.query
+export function ValidateQuery(z: ZodObject): MethodDecorator {
+  // @ts-expect-error: Gak tau dah typescript bilang error mulu disini
+  return function (
+    _target: object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<ExpressFunctionHandler>,
+  ): void {
+    const func = descriptor.value!;
+
+    descriptor.value = async function (req, res, next) {
+      try {
+        const parsed = z.parse(req.query);
+        // @ts-expect-error: TypeScript doesn't like this but it works
+        req.query = parsed;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-vars
+      } catch (e) {
+        throw AppError.new("query validation error", ErrorCause.VALIDATION_ERROR);
+      }
+
+      await func.apply(this, [req, res, next]);
+    };
+  };
+}
+
+// TODO: buat decorator untuk validasi req.params
 
 // TODO: buat decorator untuk validasi dan verifikasi jwt token
 
