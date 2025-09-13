@@ -3,7 +3,7 @@ import type { Logger } from "winston";
 
 import type { Farm } from "@/entity";
 import { type FarmCreateDto, type FarmUpdateDto } from "@/models";
-import { type IFarmRepository, FarmRepository } from "@/repository";
+import { FarmRepository, type IFarmRepository } from "@/repository";
 import { LoggingService } from "@/services/logger";
 import type { Result } from "@/types/helper";
 import { Err, Ok } from "@/utils";
@@ -23,7 +23,7 @@ export class FarmUsecase implements IFarmUsecase {
 
   constructor(
     @inject(FarmRepository) private readonly _farmRepo: IFarmRepository,
-    @inject(LoggingService) private readonly _loggerInstance: LoggingService,
+    @inject(LoggingService) private readonly _loggerInstance: LoggingService
   ) {
     this._logger = this._loggerInstance.withLabel("FarmUsecase");
   }
