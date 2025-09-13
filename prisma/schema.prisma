@@ -89,13 +89,15 @@ model Farm {
   project_id          String     @db.Char(26) // project -> farm FK
   farm_name           String
   location            String
-  land_size           Int
+  land_size           Decimal    @db.Decimal(10, 2) // luas lahan (hektare)
+  product_price       Int // harga produk per kilogram
   comodity            String
   farm_status         FarmStatus @default(ACTIVE)
   soil_type           SoilType   @default(ORGANOSOL)
   planted_at          DateTime
-  harvest_at          DateTime
+  target_harvest_date DateTime
   actual_harvest_date DateTime?
+  total_harvest       Decimal?   @db.Decimal(10, 2) // total panen (kg)
   description         String?
   created_at          DateTime   @default(now())
   updated_at          DateTime   @default(now()) @updatedAt
