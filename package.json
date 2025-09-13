@@ -14,7 +14,10 @@
     "prisma:push:reset": "prisma db push --force-reset",
     "compose:dev:up": "docker compose -f compose.dev.yaml up",
     "compose:dev:down": "docker compose -f compose.dev.yaml down",
-    "postinstall": "prisma generate"
+    "run:dev": "bun run --env-file .env --watch src/index.ts",
+    "build:js": "bun build --minify --target=bun --outfile ./build/app.js ./src/index.ts",
+    "build:bin": "bun build --compile --minify --target=bun --outfile ./build/app.bin ./src/index.ts",
+    "postinstall": "prisma generate --no-engine"
   },
   "module": "src/index.ts",
   "type": "module",
